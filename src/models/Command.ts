@@ -1,5 +1,5 @@
 import commander from 'commander';
-import { CommandEvent } from './CommandParser';
+import { CommanderCommand, CommandEvent } from './CommandParser';
 
 export interface VersionConfig {
   version: string;
@@ -82,18 +82,18 @@ export interface Command {
    * * The parameters, for all cases, are the same as the action function.
    * * - Input:
    *    - event: CommandEvent (object containing args and options)
-   *    - command: commander.Command (commander command instance)
+   *    - command: CommanderCommand (commander command instance)
    *    - commandConfig: Command (user-defined command configuration)
    * * - Output: 
    *    - void
    *
    * Example of an action function:
-   * (event: CommandEvent, command: commander.Command, commandConfig: Command) => void
+   * (event: CommandEvent, command: CommanderCommand, commandConfig: Command) => void
    */
   path?: string;
   action?: (
     event: CommandEvent, // Objeto que contiene los argumentos y opciones del comando ejecutado
-    command: commander.Command, // Instancia del comando de commander
+    command: CommanderCommand, // Instancia del comando de commander
     commandConfig: Command // Configuración del comando definida por el usuario
   ) => void;
 

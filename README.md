@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![NPM Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://www.npmjs.com/package/@alarife/commander)
+[![NPM Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://www.npmjs.com/package/@alarife/commander)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 
@@ -140,9 +140,15 @@ Declarative configuration object for a CLI command.
 | `description` | `string` | | Help text for the command. |
 | `version` | `Version` | | Command-specific version. |
 | `path` | `string` | | Path to a `.js` handler file. |
-| `action` | `(event, command, config) => void` | | Inline handler function. |
+| `action` | `(event, command, config) => void` | | Inline handler function. See signature below. |
 | `arguments` | `Argument[]` | | Positional arguments. |
 | `options` | `Option[]` | | Named options / flags. |
+
+**`action` signature:**
+
+```typescript
+(event: CommandEvent, command: CommanderCommand, commandConfig: Command) => void
+```
 
 > Both `action` and `path` can coexist — both will execute.
 
@@ -186,6 +192,16 @@ Named flag for a command.
 
 ---
 
+### `CommanderCommand`
+
+Type alias for the underlying `commander.Command` instance. Passed as the second parameter to `action` and external handlers.
+
+```typescript
+type CommanderCommand = commander.Command;
+```
+
+---
+
 ### `CommandEvent`
 
 Returned by `parse()` and passed to handlers.
@@ -196,6 +212,22 @@ interface CommandEvent {
   options: Record<string, any>;  // Parsed options (camelCase keys)
 }
 ```
+
+---
+
+### `ParserFrom`
+
+Specifies how the argument array should be parsed depending on the runtime.
+
+```typescript
+type ParserFrom = 'node' | 'electron' | 'user';
+```
+
+| Value | Description |
+|---|---|
+| `'node'` | Strips the first two elements (`node` and script path). |
+| `'electron'` | Strips Electron-specific prefix arguments. |
+| `'user'` | Uses the arguments as-is (default). |
 
 ---
 

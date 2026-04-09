@@ -4,7 +4,7 @@ import { getBaseName, getOptionName } from '../utils/flag-name';
 import { setDefault } from '../utils/flag-default';
 import { setChoices } from '../utils/flag-choices';
 import { basename, resolve } from 'node:path';
-import { CommandEvent, ParserFrom } from './CommandParser';
+import { CommanderCommand, CommandEvent, ParserFrom } from './CommandParser';
 
 export class ProgramLineInterface {
   #program: commander.Command;
@@ -156,7 +156,7 @@ export class ProgramLineInterface {
    * @param commandConfig
    * lineCommand: string, options: Record<string, any>, commandConfig: Command
    */
-  #action(args: any[], options: Record<string, any>, command: commander.Command, commandConfig: Command): void {
+  #action(args: any[], options: Record<string, any>, command: CommanderCommand, commandConfig: Command): void {
     const event: CommandEvent = {
       args: args,
       options: options
@@ -209,7 +209,7 @@ export class ProgramLineInterface {
     });
 
     commandInstance.action((...args: any[]) => {
-      const cmd: commander.Command = args.pop();
+      const cmd: CommanderCommand = args.pop();
       const options = args.pop();
 
       this.#action(args, options, cmd, command);
