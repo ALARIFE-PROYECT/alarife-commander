@@ -94,3 +94,55 @@ test('add-license test', () => {
 
   assert.strictEqual(actionExecuted, true, 'Action should be executed');
 });
+
+test('add-license should error when required option is not provided', () => {
+  const commandAddLicenseConfig: Command = {
+    name: 'add-license',
+    description: 'Add license to project',
+    action: () => {},
+    arguments: [
+      {
+        description: 'Path to add license',
+        required: true,
+        descriptiveType: 'path'
+      }
+    ],
+    options: [
+      {
+        name: 'project-name',
+        description: 'Project name',
+        required: true
+      },
+      {
+        name: 'project-author',
+        description: 'Project author',
+        required: true
+      }
+    ]
+  };
+
+  // Missing required option --project-author
+  const argvInput = ['add-license', './lib', '--project-name=@alarife'];
+  const program = new ProgramLineInterface([commandAddLicenseConfig]);
+  const originalExit = process.exit;
+  const originalStderrWrite = process.stderr.write;
+
+  let exitCode: number | undefined;
+  process.exit = ((code?: number) => {
+    exitCode = code;
+    throw new Error('process.exit called');
+  }) as never;
+  process.stderr.write = (() => true) as typeof process.stderr.write;
+
+  try {
+    assert.throws(
+      () => program.parse(argvInput),
+      { message: 'process.exit called' },
+      'Parser should error when a required option is missing'
+    );
+    assert.strictEqual(exitCode, 1, 'Exit code should be 1');
+  } finally {
+    process.exit = originalExit;
+    process.stderr.write = originalStderrWrite;
+  }
+});

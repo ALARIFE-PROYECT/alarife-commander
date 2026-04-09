@@ -125,6 +125,10 @@ export class ProgramLineInterface {
     const newOption = new commander.Option(name, option.description);
     newOption.required = option.required ?? false;
 
+    if (option.required) {
+      newOption.makeOptionMandatory(true);
+    }
+
     if (option.hideHelp) {
       newOption.hideHelp();
     }
