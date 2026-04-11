@@ -38,12 +38,6 @@ export interface Flag {
 
   choices?: string[]; // Especifica un conjunto de valores permitidos para esta opción o argumento
   preset?: any;
-
-  /**
-   * Si el parametro env es definido, se no se especifica la propiedad en el comando, se tomara el valor de la variable de entorno especificada por env.
-   * Si esta no existe entonces se tomara el valor por defecto.
-   */
-  env?: string;
 }
 
 export interface Option extends Flag {
@@ -59,6 +53,12 @@ export interface Option extends Flag {
    * Permite definir una función que se ejecutará cada vez que se establezca un valor para esta opción. La función recibe el nuevo valor y el valor anterior, y puede retornar un nuevo valor que será el que finalmente se establezca para la opción. Esto es útil para validar o transformar el valor antes de que sea utilizado por la aplicación.
    */
   hook?: (value: any, previous: any) => any;
+
+  /**
+   * Si el parametro env es definido, se no se especifica la propiedad en el comando, se tomara el valor de la variable de entorno especificada por env.
+   * Si esta no existe entonces se tomara el valor por defecto.
+   */
+  env?: string;
 }
 
 export interface Argument extends Flag {

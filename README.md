@@ -85,6 +85,59 @@ const build: Command = {
 node app.js build --out-dir lib --minify
 ```
 
+### Using environment variables
+
+You can bind an option to an environment variable using the `env` property. If the option is not provided via the command line, the value is read from the specified environment variable. If the variable is not defined either, `defaultValue` is used as a fallback.
+
+```typescript
+const deploy: Command = {
+  name: 'deploy',
+  description: 'Deploy the application',
+  action: (event) => {
+    console.log(event.options); // { token: '<value from CLI, env, or default>' }
+  },
+  options: [
+    {
+      name: 'token',
+      shortName: 't',
+      descriptiveType: 'string',
+      description: 'Authentication token',
+      env: 'DEPLOY_TOKEN',
+      defaultValue: 'default-token',
+    },
+  ],
+};
+```
+
+```bash
+# Value from CLI
+node app.js deploy --token my-secret
+
+# Value from environment variable
+DEPLOY_TOKEN=my-secret node app.js deploy
+
+# Falls back to defaultValue when neither is provided
+node app.js deploy
+```
+
+### Adding arguments and options dynamically
+
+`addArgument` and `addOption` accept one or more items at once, so you can register multiple arguments or options in a single call.
+
+```typescript
+const program = new ProgramLineInterface([{ name: 'copy' }]);
+
+program.addArgument('copy',
+  { descriptiveType: 'source', required: true },
+  { descriptiveType: 'target', required: true },
+);
+
+program.addOption('copy',
+  { name: 'recursive', shortName: 'r', description: 'Copy recursively' },
+  { name: 'force', shortName: 'f', description: 'Overwrite existing files' },
+);
+```
+
 ### Using an external handler
 
 ```typescript
@@ -122,8 +175,8 @@ const program = new ProgramLineInterface(commands?: Command[], version?: Version
 | Method | Description |
 |---|---|
 | `addCommand(command: Command)` | Register a new command. |
-| `addArgument(commandName: string, argument: Argument)` | Add a positional argument to an existing command. |
-| `addOption(commandName: string, option: Option)` | Add an option to an existing command. |
+| `addArgument(commandName: string, ...arguments: Argument[])` | Add one or more positional arguments to an existing command. |
+| `addOption(commandName: string, ...options: Option[])` | Add one or more options to an existing command. |
 | `parse(args: string[], from?: ParserFrom)` | Parse arguments and execute the matched command. Returns `CommandEvent`. |
 
 `ParserFrom` can be `'node'`, `'electron'`, or `'user'` (default).
@@ -187,6 +240,7 @@ Named flag for a command.
 | `conflicts` | `string[]` | | Mutually exclusive options. |
 | `implies` | `Record<string, any>` | | Set other options when this one is used. |
 | `hook` | `(value, previous) => any` | | Transform the parsed value. |
+| `env` | `string` | | Environment variable name. If set and the option is not provided, the value is read from this variable. Falls back to `defaultValue` if the variable is not defined. |
 
 > Option names are converted to **camelCase** internally: `--project-name` → `options.projectName`.
 
