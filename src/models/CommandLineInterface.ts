@@ -6,6 +6,9 @@ import { setChoices } from '../utils/flag-choices';
 import { basename, resolve } from 'node:path';
 import { CommanderCommand, CommandEvent, ParserFrom } from './CommandParser';
 
+/**
+ * Tool for creating command line interfaces based on commander.
+ */
 export class ProgramLineInterface {
   #program: commander.Command;
 
@@ -84,7 +87,6 @@ export class ProgramLineInterface {
 
     setDefault(newArgument, argument.defaultValue);
     setChoices(newArgument, argument.choices);
-    // .env('ENV_VAR_NAME') // TODO: implement env variable support for arguments
 
     command.addArgument(newArgument);
   }
@@ -145,9 +147,12 @@ export class ProgramLineInterface {
       newOption.implies(option.implies);
     }
 
+    if (option.env) {
+      newOption.env(option.env);
+    }
+
     setDefault(newOption, option.defaultValue);
     setChoices(newOption, option.choices);
-    // .env('ENV_VAR_NAME') // TODO: implement env variable support for options
 
     command.addOption(newOption);
   }
@@ -195,7 +200,7 @@ export class ProgramLineInterface {
   }
 
   /**
-   * Añade un comando a partir de un objeto Command
+   * Add a command to the program
    * @param command
    */
   public addCommand(command: Command) {
@@ -222,16 +227,40 @@ export class ProgramLineInterface {
     this.#commands.push(commandInstance);
   }
 
-  public addArgument(commandName: string, argument: Argument) {
+  /**
+   * Add arguments to an existing command
+   * 
+   * @param commandName 
+   * @param argumentList 
+   */
+  public addArgument(commandName: string, ...argumentList: Argument[]) {
     const command = this.#findCommand(commandName);
-    this.#addArgument(argument, command);
+
+    argumentList.forEach((argument) => {
+      this.#addArgument(argument, command);
+    });
   }
 
-  public addOption(commandName: string, option: Option) {
+  /**
+   * Add options to an existing command
+   * 
+   * @param commandName 
+   * @param optionList 
+   */
+  public addOption(commandName: string, ...optionList: Option[]) {
     const command = this.#findCommand(commandName);
-    this.#addOption(option, command);
+    optionList.forEach((option) => {
+      this.#addOption(option, command);
+    });
   }
 
+  /**
+   * Parses the command line arguments and executes the corresponding command action. Returns an object containing the parsed arguments and options.
+   * 
+   * @param args 
+   * @param from 
+   * @returns 
+   */
   parse(args: string[], from: ParserFrom = 'user'): CommandEvent {
     this.#commands.forEach((command) => this.#program.addCommand(command));
     this.#program.parse(args, { from: from });

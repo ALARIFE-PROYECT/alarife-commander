@@ -38,6 +38,12 @@ export interface Flag {
 
   choices?: string[]; // Especifica un conjunto de valores permitidos para esta opción o argumento
   preset?: any;
+
+  /**
+   * Si el parametro env es definido, se no se especifica la propiedad en el comando, se tomara el valor de la variable de entorno especificada por env.
+   * Si esta no existe entonces se tomara el valor por defecto.
+   */
+  env?: string;
 }
 
 export interface Option extends Flag {
@@ -84,7 +90,7 @@ export interface Command {
    *    - event: CommandEvent (object containing args and options)
    *    - command: CommanderCommand (commander command instance)
    *    - commandConfig: Command (user-defined command configuration)
-   * * - Output: 
+   * * - Output:
    *    - void
    *
    * Example of an action function:
