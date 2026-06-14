@@ -62,7 +62,8 @@ const build: Command = {
   name: 'build',
   description: 'Build the project',
   action: (event) => {
-    console.log(event.options); // { outDir: 'dist', minify: true }
+    console.log(event.options);       // { outDir: 'dist', minify: true }
+    console.log(event.configOptions); // { 'out-dir': 'dist', minify: true }
   },
   options: [
     {
@@ -83,6 +84,28 @@ const build: Command = {
 
 ```bash
 node app.js build --out-dir lib --minify
+```
+
+### Negatable flags (`--no-*`)
+
+When an option name starts with `no-`, commander exposes the value in `options` using camelCase **without** the `no-` prefix and inverts the boolean. `configOptions` preserves the literal name and inverts the value back, so the key always represents *"the `--no-xxx` flag was activated"*.
+
+```typescript
+const build: Command = {
+  name: 'build',
+  options: [
+    { name: 'no-banner' },
+  ],
+  action: (event) => {
+    // Running: node app.js build --no-banner
+    console.log(event.options.banner);              // false
+    console.log(event.configOptions['no-banner']);  // true
+
+    // Running: node app.js build
+    console.log(event.options.banner);              // true
+    console.log(event.configOptions['no-banner']);  // false
+  },
+};
 ```
 
 ### Using environment variables
@@ -228,7 +251,7 @@ Named flag for a command.
 
 | Property | Type | Required | Description |
 |---|---|---|---|
-| `name` | `string` | | Long flag name (e.g. `extensions` → `--extensions`). |
+| `name` | `string` | | Long flag name (e.g. `extensions` → `--extensions`). Prefix with `no-` to declare a negatable boolean flag. |
 | `shortName` | `string` | | Short flag alias (e.g. `ex` → `-ex`). |
 | `descriptiveType` | `string` | | Type label shown in help. |
 | `description` | `string` | | Help text. |
@@ -242,7 +265,7 @@ Named flag for a command.
 | `hook` | `(value, previous) => any` | | Transform the parsed value. |
 | `env` | `string` | | Environment variable name. If set and the option is not provided, the value is read from this variable. Falls back to `defaultValue` if the variable is not defined. |
 
-> Option names are converted to **camelCase** internally: `--project-name` → `options.projectName`.
+> Option names are converted to **camelCase** in `event.options` (e.g. `--project-name` → `options.projectName`) and kept as-is in `event.configOptions` (e.g. `configOptions['project-name']`).
 
 ---
 
@@ -262,10 +285,16 @@ Returned by `parse()` and passed to handlers.
 
 ```typescript
 interface CommandEvent {
-  args: any[];                   // Positional arguments in order
-  options: Record<string, any>;  // Parsed options (camelCase keys)
+  args: any[];                         // Positional arguments in order
+  options: Record<string, any>;        // Parsed options (camelCase keys, as resolved by commander)
+  configOptions: Record<string, any>;  // Parsed options keyed by the literal `name` declared in the config
 }
 ```
+
+| Field | Key format | Notes |
+|---|---|---|
+| `options` | `camelCase` | Value as produced by commander. For `--no-xxx` flags the key is `xxx` and the boolean is **not** inverted (commander stores `false` when the flag is passed). |
+| `configOptions` | Literal `name` from the config (e.g. `'out-dir'`, `'no-banner'`) | Value copied as-is for all types. For `--no-xxx` boolean flags the value is inverted so the key represents *"the flag was activated"*. Options without a `name` are omitted. |
 
 ---
 

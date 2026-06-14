@@ -166,9 +166,27 @@ export class ProgramLineInterface {
    * lineCommand: string, options: Record<string, any>, commandConfig: Command
    */
   #action(args: any[], options: Record<string, any>, command: CommanderCommand, commandConfig: Command): void {
+    const configOptions: Record<string, any> = {};
+
+    commandConfig.options?.forEach((opt) => {
+      if (!opt.name) return;
+
+      const attr = opt.name.replace(/^no-/, '').replace(/-([a-z0-9])/g, (_, c) => c.toUpperCase());
+      let value = options[attr];
+
+      // Para flags negables (`--no-xxx`), invertimos el booleano para que el
+      // nombre literal represente "se activó el flag".
+      if (opt.name.startsWith('no-') && typeof value === 'boolean') {
+        value = !value;
+      }
+
+      configOptions[opt.name] = value;
+    });
+
     const event: CommandEvent = {
       args: args,
-      options: options
+      options: options,
+      configOptions: configOptions
     };
 
     this.#lastEvent = event;
@@ -265,6 +283,6 @@ export class ProgramLineInterface {
     this.#commands.forEach((command) => this.#program.addCommand(command));
     this.#program.parse(args, { from: from });
 
-    return this.#lastEvent ?? { args: [], options: {} };
+    return this.#lastEvent ?? { args: [], options: {}, configOptions: {} };
   }
 }

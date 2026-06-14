@@ -189,4 +189,203 @@ describe('ProgramLineInterface', () => {
       });
     });
   });
+
+  describe('configOptions', () => {
+    // Verifica que las opciones con nombre simple aparezcan en configOptions con su nombre literal
+    it('Should expose simple option name in configOptions', () => {
+      const command: Command = {
+        name: 'build',
+        options: [
+          {
+            name: 'output',
+            descriptiveType: 'path'
+          }
+        ]
+      };
+
+      const program = new ProgramLineInterface([command]);
+      const event = program.parse(['build', '--output', '/tmp/out']);
+
+      assert.strictEqual(event.options.output, '/tmp/out');
+      assert.strictEqual(event.configOptions.output, '/tmp/out');
+    });
+
+    // Verifica que un nombre con guiones se mantenga literal en configOptions y en camelCase en options
+    it('Should keep literal kebab-case key in configOptions and camelCase in options', () => {
+      const command: Command = {
+        name: 'build',
+        options: [
+          {
+            name: 'value-test',
+            descriptiveType: 'string'
+          }
+        ]
+      };
+
+      const program = new ProgramLineInterface([command]);
+      const event = program.parse(['build', '--value-test', 'hello']);
+
+      assert.strictEqual(event.options.valueTest, 'hello');
+      assert.strictEqual(event.configOptions['value-test'], 'hello');
+      assert.strictEqual(event.configOptions.valueTest, undefined);
+    });
+
+    // Verifica que los valores numéricos (como string) se copien tal cual a configOptions
+    it('Should copy numeric-like value as-is into configOptions', () => {
+      const command: Command = {
+        name: 'serve',
+        options: [
+          {
+            name: 'port',
+            descriptiveType: 'number'
+          }
+        ]
+      };
+
+      const program = new ProgramLineInterface([command]);
+      const event = program.parse(['serve', '--port', '8080']);
+
+      assert.strictEqual(event.options.port, '8080');
+      assert.strictEqual(event.configOptions.port, '8080');
+    });
+
+    // Verifica que un flag booleano simple se mantenga sin invertir en configOptions
+    it('Should keep boolean flag value unchanged in configOptions', () => {
+      const command: Command = {
+        name: 'build',
+        options: [
+          {
+            name: 'verbose'
+          }
+        ]
+      };
+
+      const program = new ProgramLineInterface([command]);
+      const event = program.parse(['build', '--verbose']);
+
+      assert.strictEqual(event.options.verbose, true);
+      assert.strictEqual(event.configOptions.verbose, true);
+    });
+
+    // Verifica que un flag negable (no-xxx) se invierta en configOptions
+    it('Should invert boolean value for no-prefixed flags when flag is passed', () => {
+      const command: Command = {
+        name: 'build',
+        options: [
+          {
+            name: 'no-banner'
+          }
+        ]
+      };
+
+      const program = new ProgramLineInterface([command]);
+      const event = program.parse(['build', '--no-banner']);
+
+      // commander expone `banner: false` cuando se pasa `--no-banner`
+      assert.strictEqual(event.options.banner, false);
+      // configOptions['no-banner'] representa "se activó el flag --no-banner"
+      assert.strictEqual(event.configOptions['no-banner'], true);
+    });
+
+    // Verifica que un flag negable no pasado mantenga el valor por defecto invertido
+    it('Should invert default boolean for no-prefixed flag when not passed', () => {
+      const command: Command = {
+        name: 'build',
+        options: [
+          {
+            name: 'no-banner'
+          }
+        ]
+      };
+
+      const program = new ProgramLineInterface([command]);
+      const event = program.parse(['build']);
+
+      assert.strictEqual(event.options.banner, true);
+      assert.strictEqual(event.configOptions['no-banner'], false);
+    });
+
+    // Verifica que un flag negable de varias palabras (no-color-output) se mapee correctamente
+    it('Should handle multi-word no-prefixed flag (no-color-output)', () => {
+      const command: Command = {
+        name: 'build',
+        options: [
+          {
+            name: 'no-color-output'
+          }
+        ]
+      };
+
+      const program = new ProgramLineInterface([command]);
+      const event = program.parse(['build', '--no-color-output']);
+
+      assert.strictEqual(event.options.colorOutput, false);
+      assert.strictEqual(event.configOptions['no-color-output'], true);
+    });
+
+    // Verifica que configOptions devuelva undefined si la opción no se pasó y no tiene default
+    it('Should set undefined in configOptions when option was not provided', () => {
+      const command: Command = {
+        name: 'build',
+        options: [
+          {
+            name: 'output',
+            descriptiveType: 'path'
+          }
+        ]
+      };
+
+      const program = new ProgramLineInterface([command]);
+      const event = program.parse(['build']);
+
+      assert.ok('output' in event.configOptions);
+      assert.strictEqual(event.configOptions.output, undefined);
+    });
+
+    // Verifica que se respete el defaultValue propagado a configOptions
+    it('Should propagate defaultValue to configOptions', () => {
+      const command: Command = {
+        name: 'build',
+        options: [
+          {
+            name: 'output',
+            descriptiveType: 'path',
+            defaultValue: '/default/path'
+          }
+        ]
+      };
+
+      const program = new ProgramLineInterface([command]);
+      const event = program.parse(['build']);
+
+      assert.strictEqual(event.options.output, '/default/path');
+      assert.strictEqual(event.configOptions.output, '/default/path');
+    });
+
+    // Verifica que una opción sin name (sólo shortName) sea ignorada en configOptions
+    it('Should ignore options without name in configOptions', () => {
+      const command: Command = {
+        name: 'build',
+        options: [
+          {
+            shortName: 'v',
+            descriptiveType: 'string'
+          }
+        ]
+      };
+
+      const program = new ProgramLineInterface([command]);
+      const event = program.parse(['build', '-v', 'value']);
+
+      assert.deepStrictEqual(event.configOptions, {});
+    });
+
+    // Verifica que parse sin acción definida devuelva un evento con configOptions vacío
+    it('Should return empty configOptions when no command was matched', () => {
+      const program = new ProgramLineInterface([]);
+      const event = program.parse([]);
+
+      assert.deepStrictEqual(event, { args: [], options: {}, configOptions: {} });
+    });
+  });
 });
