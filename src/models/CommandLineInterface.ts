@@ -158,14 +158,13 @@ export class ProgramLineInterface {
   }
 
   /**
-   * Función que se ejecutará cada vez que se ejecute un comando.
-   *
-   * @param lineCommand
-   * @param options
-   * @param commandConfig
-   * lineCommand: string, options: Record<string, any>, commandConfig: Command
+   * Genera un objeto con las opciones de configuración a partir de las opciones del comando y las opciones pasadas por el usuario.
+   * 
+   * @param commandConfig 
+   * @param options 
+   * @returns 
    */
-  #action(args: any[], options: Record<string, any>, command: CommanderCommand, commandConfig: Command): void {
+  #getConfigOptions(commandConfig: Command, options: Record<string, any>): Record<string, any> {
     const configOptions: Record<string, any> = {};
 
     commandConfig.options?.forEach((opt) => {
@@ -183,10 +182,22 @@ export class ProgramLineInterface {
       configOptions[opt.name] = value;
     });
 
+    return configOptions;
+  }
+
+  /**
+   * Función que se ejecutará cada vez que se ejecute un comando.
+   *
+   * @param lineCommand
+   * @param options
+   * @param commandConfig
+   * lineCommand: string, options: Record<string, any>, commandConfig: Command
+   */
+  #action(args: any[], options: Record<string, any>, command: CommanderCommand, commandConfig: Command): void {
     const event: CommandEvent = {
       args: args,
       options: options,
-      configOptions: configOptions
+      configOptions: this.#getConfigOptions(commandConfig, options)
     };
 
     this.#lastEvent = event;
